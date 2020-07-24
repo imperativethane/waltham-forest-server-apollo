@@ -78,5 +78,6 @@ const Results = mongoose.model('Results', resultsSchema);
 Results.discriminator('LeagueResult', leagueResultSchema);
 Results.discriminator('CupResult', cupResultSchema);
 
+exports.results = mongoose.model('Results');
 exports.leagueResult = mongoose.model('LeagueResult');
 exports.cupResult = mongoose.model('CupResult');

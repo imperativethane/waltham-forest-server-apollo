@@ -1,60 +1,55 @@
 const Team = require('../../models/Teams');
 const results = require('../../models/Results');
+
 const LeagueResult = results.leagueResult;
 
 const { transformTeamData, checkTeam, runInTransaction } = require('./merge');
 
 module.exports = {
-  teams: async () => {
-    try {
+  Query: {
+    teams: async () => {
       const teams = await Team.find();
       return teams.map((team) => {
         return transformTeamData(team);
       });
-    } catch (err) {
-      throw err;
-    }
+    },
   },
-  createTeam: async ({ teamInput }) => {
-    const checkTeam = await Team.findOne({ name: teamInput.name });
-    if (checkTeam) {
-      throw new Error('This team already exists.');
-    }
+  Mutation: {
+    createTeam: async (root, { teamInput }) => {
+      const checkedTeam = await Team.findOne({ name: teamInput.name });
+      if (checkedTeam) {
+        throw new Error('This team already exists.');
+      }
 
-    const createTeam = new Team({
-      name: teamInput.name,
-    });
+      const createTeam = new Team({
+        name: teamInput.name,
+      });
 
-    let createdTeam;
-    try {
       const saveTeam = await createTeam.save();
-      createdTeam = {
+      const createdTeam = {
         ...saveTeam._doc,
       };
       return createdTeam;
-    } catch (err) {
-      throw err;
-    }
-  },
-  deleteTeam: async ({ teamId }) => {
-    if (teamId === '5ee34d1bc2ac4d68d4fb9a58') {
-      throw new Error('Cannot delete Waltham Forest Utd from the database');
-    }
+    },
+    deleteTeam: async (root, { teamId }) => {
+      if (teamId === '5ee34d1bc2ac4d68d4fb9a58') {
+        throw new Error('Cannot delete Waltham Forest Utd from the database');
+      }
 
-    const deleteTeam = await Team.findById(teamId);
-    if (!deleteTeam) {
-      throw new Error('Team does not exist on the database');
-    }
-    const leagueResults = deleteTeam.leagueResults;
+      const deleteTeam = await Team.findById(teamId);
+      if (!deleteTeam) {
+        throw new Error('Team does not exist on the database');
+      }
 
-    let deletedTeam;
-    try {
+      const { leagueResults } = deleteTeam;
+
+      let deletedTeam;
       await runInTransaction(async (session) => {
         await LeagueResult.find({ _id: { $in: leagueResults } }, null, {
-          session: session,
+          session,
         })
           .cursor()
-          .eachAsync(async (leagueResult, i) => {
+          .eachAsync(async (leagueResult) => {
             if (leagueResult.homeTeam === deleteTeam) {
               const awayTeam = await checkTeam(leagueResult.awayTeam);
 
@@ -111,12 +106,10 @@ module.exports = {
               await LeagueResult.findByIdAndDelete(leagueResult._id);
             }
           });
-        await Team.deleteOne({ _id: deleteTeam }, { session: session });
+        await Team.deleteOne({ _id: deleteTeam }, { session });
         deletedTeam = transformTeamData(deleteTeam);
       });
       return deletedTeam;
-    } catch (err) {
-      throw err;
-    }
+    },
   },
 };

@@ -4,6 +4,7 @@ module.exports = gql`
   extend type Query {
     leagueResults: [LeagueResult!]!
     cupResults: [CupResult!]!
+    results: [Result!]!
   }
 
   extend type Mutation {
@@ -13,7 +14,13 @@ module.exports = gql`
     deleteCupResult(resultId: ID!): CupResult!
   }
 
-  type LeagueResult {
+  interface Result {
+    _id: ID!
+    date: String!
+    appearances: [Appearance!]
+  }
+
+  type LeagueResult implements Result {
     _id: ID!
     homeTeam: Team!
     homeScore: Int!
@@ -23,7 +30,7 @@ module.exports = gql`
     appearances: [Appearance!]
   }
 
-  type CupResult {
+  type CupResult implements Result {
     _id: ID!
     opponent: String!
     homeTeam: Boolean!

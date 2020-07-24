@@ -17,7 +17,7 @@ module.exports = gql`
 
   type Appearance {
     _id: ID!
-    result: LeagueResult!
+    result: Result!
     player: Player!
     starter: Boolean!
     substitute: Boolean!

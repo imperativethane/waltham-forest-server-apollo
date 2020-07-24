@@ -21,7 +21,8 @@ module.exports = gql`
     goalsAgainst: Int!
     goalDifference: Int!
     points: Int!
-    results: [LeagueResult!]
+    leagueResults: [LeagueResult!]!
+    cupResults: [CupResult!]!
   }
 
   input TeamInput {
